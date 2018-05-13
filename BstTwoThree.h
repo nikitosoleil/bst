@@ -1,7 +1,6 @@
 #pragma once
 
 #include <vector>
-#include <iostream> /// TODO: GTFO
 #include <cassert>
 
 using namespace std;
@@ -14,21 +13,93 @@ namespace BST
 	template < class Target >
 	class TwoThree
 	{
+	protected:
 		struct Node
 		{
+			static const int MAX_DEGREE = 5;
 			int Degree;
 			Target Value, *Max;
-			Node **To;
-			Node ()
+			Node **To, *P;
+			Node (Target Input = -Target::INF)
 			{
-				Value = Target(-Target::INF, 0);
-				Max = new Target[4];
-				To = new Node *[4];
+				Value = Input;
+				P = 0;
+				Max = new Target[MAX_DEGREE];
+				To = new Node *[MAX_DEGREE];
 				Degree = 0;
-				for (int i = 0; i < 4; ++i)
+				for (int i = 0; i < MAX_DEGREE; ++i)
 				{
 					Max[i] = Target(Target::INF, 0);
 					To[i] = 0;
+				}
+			}
+			void Insert (Node *V)
+			{
+				V->P = this;
+				int Pos = Degree;
+				while (Pos && Max[Pos-1] > V->Value)
+				{
+					Max[Pos] = Max[Pos-1];
+					To[Pos] = To[Pos-1];
+					--Pos;
+				}
+				Max[Pos] = V->Value;
+				To[Pos] = V;
+				++Degree;
+				Single_Update();
+			}
+			void Erase (Node *V)
+			{
+				for (int i = 0; i < Degree; ++i)
+				{
+					if (To[i] == V)
+					{
+						for (int j = i; j < Degree; ++j)
+						{
+							Max[j] = Max[j+1];
+							To[j] = To[j+1];
+						}
+						--Degree;
+						break;
+					}
+				}
+				Single_Update();
+			}
+			void Single_Update ()
+			{
+				Value = -Target::INF;
+				for (int i = 0; i < Degree; ++i)
+				{
+					Max[i] = To[i]->Value;
+					Value = max(Value, Max[i]);
+				}
+			}
+			void Update ()
+			{
+				Single_Update();
+				if (P)
+					P->Update();
+			}
+			void Split (Node *&Root)
+			{
+				if (Degree == 4)
+				{
+					Node *New = new Node();
+					New->Insert(To[3]);
+					Erase(To[3]);
+					New->Insert(To[2]);
+					Erase(To[2]);
+					if (P)
+					{
+						P->Insert(New);
+						P->Split(Root);
+					}
+					else
+					{
+						Root = new Node();
+						Root->Insert(this);
+						Root->Insert(New);
+					}
 				}
 			}
 			~Node ()
@@ -38,216 +109,43 @@ namespace BST
 			}
 		} *Root;
 		
-		
-		void Update(Node *V)
-		{
-			if(V && V->Degree)
-			{
-				V->Value = -Target::INF;
-				for(int i=0; i<V->Degree; ++i)
-				{
-					V->Max[i] = V->To[i]->Value;
-					V->Value = max(V->Value, V->Max[i]);
-				}
-				for (int i = V->Degree; i < 4; ++i)
-				{
-					V->Max[i] = Target::INF;
-					V->To[i] = 0;
-				}
-			}
-		}
-		void Append (Node *V, Node *U)
-		{
-			int i;
-			for (i = V->Degree-1; i >= 0 && V->Max[i] > U->Value; --i)
-			{
-				V->Max[i+1] = V->Max[i];
-				V->To[i+1] = V->To[i];
-			}
-			V->To[i+1] = U;
-			V->Max[i+1] = U->Value;
-			V->Value = max(V->Value, U->Value);
-			++V->Degree;
-		}
-		void Reduce (Node *V, Node *P)
-		{
-			if (V->Degree == 4)
-			{
-				V->Degree = 2;
-				Node *New = new Node;
-				New->Degree = 2;
-				for (int i = 0; i <= 1; ++i)
-				{
-					New->To[i] = V->To[i];
-					New->Max[i] = V->Max[i];
-					V->To[i] = V->To[i+2];
-					V->Max[i] = V->Max[i+2];
-					V->To[i+2] = 0;
-					V->Max[i+2] = Target::INF;
-				}
-				New->Value = max(New->Max[0], New->Max[1]);
-				if (!P)
-				{
-					Root = new Node;
-					Root->To[0] = New;
-					Root->To[1] = V;
-					Root->Max[0] = New->Value;
-					Root->Max[1] = V->Value;
-					Root->Degree = 2;
-					Root->Value = max(Root->Max[0], Root->Max[1]);
-				}
-				else
-					Append(P, New);
-			}
-		}
-		void Insert (Node *V, Node *P, Target &Object)
-		{
-			if (!V)
-			{
-				Root = new Node;
-				Root->Value = Object;
-				Root->Degree = 0;
-			}
-			else
-			{
-				if (V->Degree > 2 && V->Max[1] < Object && V->To[2])
-				{
-					Insert(V->To[2], V, Object);
-					Reduce(V, P);
-				}
-				else if (V->Degree > 1 && V->Max[0] < Object && V->To[1])
-				{
-					Insert(V->To[1], V, Object);
-					Reduce(V, P);
-				}
-				else if (V->Degree > 01 && V->To[0])
-				{
-					Insert(V->To[0], V, Object);
-					Reduce(V, P);
-				}
-				else if (V->Value != Object)
-				{
-					Node *New = new Node;
-					New->Value = Object;
-					New->Degree = 0;
-					if (!P)
-					{
-						if (New->Value > V->Value)
-							swap(New, V);
-						Root = new Node;
-						Root->To[0] = New;
-						Root->To[1] = V;
-						Root->Max[0] = New->Value;
-						Root->Max[1] = V->Value;
-						Root->Degree = 2;
-						Root->Value = max(Root->Max[0], Root->Max[1]);
-					}
-					else
-						Append(P, New);
-				}
-				Update(V);
-			}
-		}
-		bool Erase (Node *V, Node *P, Node *GP, Target &Object)
-		{
-			if (!V)
-				return false;
-			bool Ret = false;
-			if (V->Degree > 2 && V->Max[1] < Object && V->To[2])
-				Ret = Erase(V->To[2], V, P, Object);
-			else if (V->Degree > 1 && V->Max[0] < Object && V->To[1])
-				Ret = Erase(V->To[1], V, P, Object);
-			else if (V->Degree > 0 && V->To[0])
-				Ret = Erase(V->To[0], V, P, Object);
-			else if (V->Value == Object)
-				Ret = true;
-			
-			if (Ret && V->Degree == 0)
-			{
-				if (!P)
-					Root = 0;
-				else if (P->Degree == 3)
-				{
-					for (int i = 0; i < P->Degree; ++i)
-						if (P->To[i] == V)
-						{
-							for (int j = i; j < P->Degree; ++j)
-							{
-								P->To[j] = P->To[j+1];
-								P->Max[j] = P->Max[j+1];
-							}
-							break;
-						}
-					P->To[P->Degree-1]=0;
-					P->Max[P->Degree-1] = Target(Target::INF, 0);
-					--P->Degree;
-				}
-				else
-				{
-					Node *B = 0;
-					for (int i = 0; i < P->Degree; ++i)
-						if (P->To[i] != V)
-							B = P->To[i];
-					if (!GP)
-					{
-						Root = B;
-						P->Degree = 123456789;
-					}
-					else
-					{
-						Node *NP = 0;
-						for (int i = 0; i < GP->Degree; ++i)
-							if (GP->To[i] == P)
-							{
-								if(i>0)
-									NP = GP->To[i-1];
-								else
-									NP = GP->To[i+1];
-								/*
-								for (int j = i; j < GP->Degree; ++j)
-								{
-									GP->To[j] = GP->To[j+1];
-									GP->Max[j] = GP->Max[j+1];
-								}
-								*/
-								break;
-							}
-						// GP->To[GP->Degree-1] = 0;
-						// GP->Max[GP->Degree-1] = Target(Target::INF, 0);
-						Append(NP, B);
-						Reduce(NP, GP);
-						for(int i=0; i<2; ++i)
-						{
-							P->Max[i] = Target::INF;
-							P->To[i] = 0;
-						}
-						P->Degree = 0;
-					}
-				}
-				delete V;
-			}
-			if(V->Degree == 123456789)
-				delete V;
-			//Update(V);
-			
-			return Ret;
-		}
 		void Clear (Node *V)
 		{
-			if (!V)
-				return;
-			for (int i = 0; i < V->Degree; ++i)
-				Clear(V->To[i]);
-			delete V;
+			if (V)
+			{
+				for (int i = 0; i < V->Degree; ++i)
+					Clear(V->To[i]);
+				delete V;
+			}
 		}
 		int Size (Node *V)
 		{
-			if (!V)
-				return 0;
 			int Ret = 0;
-			for (int i = 0; i < V->Degree; ++i)
-				Ret += Size(V->To[i]);
-			return max(Ret, 1);
+			if (V)
+			{
+				for (int i = 0; i < V->Degree; ++i)
+				{
+					auto Tmp = V->To[i];
+					Ret += Size(V->To[i]);
+				}
+				if (Ret == 0)
+					++Ret;
+			}
+			return Ret;
+		}
+		Node *Find (Target &Object)
+		{
+			Node *V = Root;
+			while (V && V->Degree)
+			{
+				if (V->Degree == 3 && Object > V->Max[1])
+					V = V->To[2];
+				else if (Object > V->Max[0])
+					V = V->To[1];
+				else
+					V = V->To[0];
+			}
+			return V;
 		}
 	public:
 		TwoThree ()
@@ -258,6 +156,100 @@ namespace BST
 		{
 			Clear();
 		}
+		void Insert (Target &Object)
+		{
+			Node *New = new Node(Object);
+			if (Root)
+			{
+				Node *V = Find(Object);
+				if (V->Value != Object)
+				{
+					if (V->P)
+					{
+						V->P->Insert(New);
+						V->P->Update();
+						V->P->Split(Root);
+					}
+					else
+					{
+						Root = new Node();
+						Root->Insert(V);
+						Root->Insert(New);
+					}
+					V->P->Update();
+				}
+			}
+			else
+				Root = New;
+		}
+		void Erase (Node *V)
+		{
+			if (V->P)
+			{
+				if (V->P->Degree > 2)
+				{
+					V->P->Erase(V);
+					V->P->Update();
+					delete V;
+				}
+				else
+				{
+					Node *U;
+					for (int i = 0; i < V->P->Degree; ++i)
+						if (V->P->To[i] == V)
+						{
+							if (i > 0)
+								U = V->P->To[i-1];
+							else
+								U = V->P->To[i+1];
+						}
+					if (!V->P->P)
+					{
+						delete V->P;
+						delete V;
+						Root = U;
+						U->P = 0;
+					}
+					else
+					{
+						Target Tmp = V->P->Value;
+						Node *NP;
+						for (int i = 0; i < V->P->P->Degree; ++i)
+							if (V->P->P->To[i] == V->P)
+							{
+								if (i > 0)
+									NP = V->P->P->To[i-1];
+								else
+									NP = V->P->P->To[i+1];
+							}
+						V->P->Erase(V);
+						NP->Insert(U);
+						V->P->Erase(U);
+						V->P->Value = Tmp;
+						NP->Split(Root);
+						NP->Update();
+						Erase(V->P);
+						delete V;
+					}
+				}
+			}
+			else
+			{
+				delete V;
+				Root = 0;
+			}
+		}
+		bool Erase (Target &Object)
+		{
+			Node *V = Find(Object);
+			if (V && V->Value == Object)
+			{
+				Erase(V);
+				return true;
+			}
+			else
+				return false;
+		}
 		void Clear ()
 		{
 			Clear(Root);
@@ -266,48 +258,16 @@ namespace BST
 		{
 			return Size(Root);
 		}
-		void Insert (Target &Object)
-		{
-			Insert(Root, 0, Object);
-		}
-		bool Erase (Target &Object)
-		{
-			return Erase(Root, 0, 0, Object);
-		}
 		bool Find (Target &Object, Target &Result)
 		{
-			Node *V = Root;
-			while (V)
-				if (V->Max[1] < Object && V->To[2])
-					V = V->To[2];
-				else if (V->Max[0] < Object && V->To[1])
-					V = V->To[1];
-				else if (V->To[0])
-					V = V->To[0];
-				else if (V->Value == Object)
-				{
-					Result = V->Value;
-					return true;
-				}
-				else
-					return false;
-			return false;
-		}
-		void Test (Node *V)
-		{
-			if(!V)
-				return;
-			cout << "V: " << V->Degree << ' ' << V->Value.X << ' ' << V->Value.Y << endl;
-			for (int i = 0; i < V->Degree; ++i)
-				cout << V->Max[i].X << ' ' << V->Max[i].Y << '\t';
-			cout << endl;
-			for (int i = 0; i < V->Degree; ++i)
-				Test(V->To[i]);
-		}
-		void Test () /// TODO: GTFO
-		{
-			cout << "Test\n";
-			Test(Root);
+			Node *V = Find(Object);
+			if (V && V->Value == Object)
+			{
+				Result = V->Value;
+				return true;
+			}
+			else
+				return false;
 		}
 	};
 }
