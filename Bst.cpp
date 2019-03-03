@@ -1,12 +1,10 @@
+#include "Bst.h"
 #include "BstAvl.h"
 #include "BstTreap.h"
 #include "BstTwoThree.h"
-#include "BstRbt.h"
+#include "BstSplay.h"
 
-#include <iostream>
 #include <set>
-#include <cstdlib>
-#include <ctime>
 
 using namespace std;
 using namespace BST;
@@ -61,18 +59,17 @@ int main()
 {
 	srand(time(0));
 	set < Pair > Set;
-	AVL < Pair > Avl;
-	Treap < Pair > Treap;
-	TwoThree < Pair > TwoThree;
-	RBT < Pair > RBT;
+
+	vector < Base < Pair > * > trees{new AVL < Pair >(), new TwoThree < Pair >(), new Treap < Pair >(), new Splay < Pair >()};
+	vector < string > tree_names{"AVL", "2-3", "Treap", "Splay"};
 
 	cout << "Enter the amount of queries and maximum element value: \n";
 	int Size, Value;
 	// cin >> Size >> Value;
-	Size = 100000, Value = 100000;
+	Size = 1000000, Value = 1000000;
 	vector < Query > Queries;
 	for (int i = 0; i < Size; ++i)
-		Queries.push_back(Query((random()%2)*2, random()%Value, random()%Value));
+		Queries.push_back(Query(random()%3, random()%Value, random()%Value));
 	cout << "Generation complete!\n";
 
 	clock_t Time = clock();
@@ -97,162 +94,52 @@ int main()
 	}
 	cout << "Set processing complete!\n";
 	cout << (clock() - Time + 0.0)/ld(CLOCKS_PER_SEC) << endl;
+	cout << "Size is: " << Set.size() << endl;
 
-	Time = clock();
-	bool Check = true;
-	for (int i = 0; i < Size; ++i)
+	for (int i = 0; i < trees.size(); ++i)
 	{
-		switch (Queries[i].Type)
+		Base < Pair > *tree = trees[i];
+		Time = clock();
+		bool Check = true;
+		for (int i = 0; i < Size; ++i)
 		{
-			case 0: RBT.insert(Queries[i].P);
-				break;
-			case 1: return 1;
-			case 2:
+			switch (Queries[i].Type)
 			{
-				Pair Response;
-				if (RBT.find(Queries[i].P, Response))
+				case 0: tree->insert(Queries[i].P);
+					break;
+				case 1: tree->erase(Queries[i].P);
+					break;
+				case 2:
 				{
-					if (Response.Y != Queries[i].Response)
+					Pair Response;
+					if (tree->find(Queries[i].P, Response))
 					{
-						cout << "Attention: " << Response.Y << ' ' << Queries[i].Response << endl;
-						Check = false;
+						if (Response.Y != Queries[i].Response)
+						{
+							cout << "Attention: " << Response.Y << ' ' << Queries[i].Response << endl;
+							Check = false;
+						}
 					}
-				}
-				else
-				{
-					if (Queries[i].Response != -1)
+					else
 					{
-						cout << "Attention: " << Queries[i].Response << endl;
-						Check = false;
+						if (Queries[i].Response != -1)
+						{
+							cout << "Attention: " << Queries[i].Response << endl;
+							Check = false;
+						}
 					}
+					break;
 				}
-				break;
 			}
 		}
+		cout << tree_names[i] << " processing complete!\n";
+		cout << (clock() - Time + 0.0)/ld(CLOCKS_PER_SEC) << endl;
+		if (Check)
+			cout << "All answers are matching!\n";
+		else
+			cout << "Sorry, there are some mistakes...\n";
+		cout << "Size is: " << tree->size() << endl;
+		cout << endl;
 	}
-	cout << "RBT processing complete!\n";
-	cout << (clock() - Time + 0.0)/ld(CLOCKS_PER_SEC) << endl;
-	if (Check)
-		cout << "All answers are matching!\n";
-	else
-		cout << "Sorry, there are some mistakes...\n";
-
-	Time = clock();
-	Check = true;
-	for (int i = 0; i < Size; ++i)
-	{
-		switch (Queries[i].Type)
-		{
-			case 0: Avl.Insert(Queries[i].P);
-				break;
-			case 1: Avl.Erase(Queries[i].P);
-				break;
-			case 2:
-			{
-				Pair Response;
-				if (Avl.Find(Queries[i].P, Response))
-				{
-					if (Response.Y != Queries[i].Response)
-					{
-						cout << "Attention: " << Response.Y << ' ' << Queries[i].Response << endl;
-						Check = false;
-					}
-				}
-				else
-				{
-					if (Queries[i].Response != -1)
-					{
-						cout << "Attention: " << Queries[i].Response << endl;
-						Check = false;
-					}
-				}
-				break;
-			}
-		}
-	}
-	cout << "Avl processing complete!\n";
-	cout << (clock() - Time + 0.0)/ld(CLOCKS_PER_SEC) << endl;
-	if (Check)
-		cout << "All answers are matching!\n";
-	else
-		cout << "Sorry, there are some mistakes...\n";
-
-	Time = clock();
-	Check = true;
-	for (int i = 0; i < Size; ++i)
-	{
-		switch (Queries[i].Type)
-		{
-			case 0: Treap.Insert(Queries[i].P, random()%Value);
-				break;
-			case 1: Treap.Erase(Queries[i].P);
-				break;
-			case 2: Pair Response;
-				if (Treap.Find(Queries[i].P, Response))
-				{
-					if (Response.Y != Queries[i].Response)
-					{
-						cout << "Attention: " << Response.Y << ' ' << Queries[i].Response << endl;
-						Check = false;
-					}
-				}
-				else
-				{
-					if (Queries[i].Response != -1)
-					{
-						cout << "Attention: " << Queries[i].Response << endl;
-						Check = false;
-					}
-				}
-				break;
-		}
-	}
-	cout << "Treap processing complete!\n";
-	cout << (clock() - Time + 0.0)/ld(CLOCKS_PER_SEC) << endl;
-	if (Check)
-		cout << "All answers are matching!\n";
-	else
-		cout << "Sorry, there are some mistakes...\n";
-
-	Time = clock();
-	Check = true;
-	for (int i = 0; i < Size; ++i)
-	{
-		switch (Queries[i].Type)
-		{
-			case 0: TwoThree.Insert(Queries[i].P);
-				break;
-			case 1: TwoThree.Erase(Queries[i].P);
-				break;
-			case 2:
-			{
-				Pair Response;
-				if (TwoThree.Find(Queries[i].P, Response))
-				{
-					if (Response.Y != Queries[i].Response)
-					{
-						cout << "Attention: " << Response.Y << ' ' << Queries[i].Response << endl;
-						Check = false;
-					}
-				}
-				else
-				{
-					if (Queries[i].Response != -1)
-					{
-						cout << "Attention: " << Queries[i].Response << endl;
-						Check = false;
-					}
-				}
-				break;
-			}
-		}
-	}
-	cout << "TwoThree processing complete!\n";
-	cout << (clock() - Time + 0.0)/ld(CLOCKS_PER_SEC) << endl;
-	cout << "Sizes are: " << Set.size() << ", " << RBT.size() << ", " << Avl.Size() << ", " << Treap.Size() << " and " << TwoThree.Size() << endl;
-	if (Check && Set.size() == RBT.size() && Set.size() == Avl.Size() && Set.size() == Treap.Size() && Set.size() == TwoThree.Size())
-		cout << "All answers are matching!\n";
-	else
-		cout << "Sorry, there are some mistakes...\n";
 	return 0;
 }

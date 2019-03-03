@@ -1,17 +1,15 @@
 #pragma once
 
 #include <vector>
-#include <cassert>
+#include "Bst.h"
 
 using namespace std;
-
-#define max(a, b) ((a>b)?a:b)
 
 namespace BST
 {
 	/// Not actually a binary tree, but who cares
 	template < class Target >
-	class TwoThree
+	class TwoThree : public Base < Target >
 	{
 	protected:
 		struct Node
@@ -156,7 +154,7 @@ namespace BST
 		{
 			Clear();
 		}
-		void Insert (Target &Object)
+		void insert(Target &Object)
 		{
 			Node *New = new Node(Object);
 			if (Root)
@@ -239,7 +237,7 @@ namespace BST
 				Root = 0;
 			}
 		}
-		bool Erase (Target &Object)
+		bool erase(Target &Object)
 		{
 			Node *V = Find(Object);
 			if (V && V->Value == Object)
@@ -250,15 +248,15 @@ namespace BST
 			else
 				return false;
 		}
-		void Clear ()
+		void clear()
 		{
 			Clear(Root);
 		}
-		int Size ()
+		int size()
 		{
 			return Size(Root);
 		}
-		bool Find (Target &Object, Target &Result)
+		bool find(Target &Object, Target &Result)
 		{
 			Node *V = Find(Object);
 			if (V && V->Value == Object)

@@ -1,17 +1,20 @@
 #pragma once
 
 #include <vector>
+#include <random>
+#include <ctime>
+#include "Bst.h"
 
 using namespace std;
-
-#define max(a, b) ((a>b)?a:b)
 
 namespace BST
 {
 	template < class Target >
-	class Treap
+	class Treap : public Base < Target >
 	{
 	private:
+		default_random_engine generator = default_random_engine(time(0));
+		uniform_int_distribution < int > distribution = uniform_int_distribution < int >(INT_MIN, INT_MAX);
 		struct Node
 		{
 			Target X;
@@ -19,7 +22,7 @@ namespace BST
 			Node *L, *R;
 			Node (Target A = Target(), int B = 0): X(A), Y(B), L(0), R(0) {}
 		} *Root = 0;
-		
+
 		pair < Node *, Node * > Split (Node *V, Target Key)
 		{
 			if (!V)
@@ -66,7 +69,7 @@ namespace BST
 		int Size (Node *V)
 		{
 			if (V)
-				return Size(V->L)+Size(V->R)+1;
+				return Size(V->L) + Size(V->R) + 1;
 			else
 				return 0;
 		}
@@ -76,31 +79,36 @@ namespace BST
 		{
 			Clear();
 		}
-		void Clear ()
+		void clear()
 		{
 			Clear(Root);
 		}
-		int Size ()
+		int size()
 		{
 			return Size(Root);
 		}
-		void Insert (Target X, int Y)
+		void insert(Target &X, int Y)
 		{
 			Target Tmp;
-			if (Find(X, Tmp)) return;
+			if (find(X, Tmp))
+				return;
 			auto One = Split(Root, X);
 			auto Now = new Node(X, Y);
 			auto Two = Merge(One.first, Now);
 			Root = Merge(Two, One.second);
 		}
-		void Erase (Target X)
+		void insert(Target &X)
+		{
+			insert(X, distribution(generator));
+		}
+		bool erase(Target &X)
 		{
 			auto One = Split(Root, X+1);
 			auto Two = Split(One.first, X);
 			delete Two.second;
 			Root = Merge(Two.first, One.second);
 		}
-		bool Find (Target &Object, Target &Result)
+		bool find(Target &Object, Target &Result)
 		{
 			Node *V = Root;
 			while (true)

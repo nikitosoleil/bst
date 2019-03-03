@@ -1,11 +1,13 @@
 #pragma once
 
+#include "Bst.h"
+
 using namespace std;
 
 namespace BST
 {
 template < class T >
-class RBT
+class RBT : public Base < T >
 {
 private:
 	enum Color { red, black };
@@ -113,6 +115,10 @@ public:
 	void insert(T &value)
 	{
 		insert(root, nullptr, nullptr, value);
+	}
+	bool erase(T &value)
+	{
+		// TODO
 	}
 	void clear()
 	{
