@@ -3,6 +3,7 @@
 #include "BstTreap.h"
 #include "BstTwoThree.h"
 #include "BstSplay.h"
+#include "BstBPlus.h"
 
 #include <set>
 
@@ -59,9 +60,10 @@ int main()
 {
 	srand(time(0));
 	set < Pair > Set;
-
-	vector < Base < Pair > * > trees{new AVL < Pair >(), new TwoThree < Pair >(), new Treap < Pair >(), new Splay < Pair >()};
-	vector < string > tree_names{"AVL", "2-3", "Treap", "Splay"};
+	vector < Base < Pair > * >
+		trees{new BPlus < Pair, 10 >(), new AVL < Pair >(), new TwoThree < Pair >(), new Treap < Pair >(), new Splay < Pair >()};
+	//vector < Base < Pair > * > trees{new TwoThree < Pair >()};//, new TwoThree < Pair >(), new Treap < Pair >(), new Splay < Pair >()};
+	vector < string > tree_names{"B+", "AVL", "2-3", "Treap", "Splay"};
 
 	cout << "Enter the amount of queries and maximum element value: \n";
 	int Size, Value;
@@ -70,7 +72,35 @@ int main()
 	vector < Query > Queries;
 	for (int i = 0; i < Size; ++i)
 		Queries.push_back(Query(random()%3, random()%Value, random()%Value));
+	/*
+	Queries.push_back(Query(1, 1, 1));
+	Queries.push_back(Query(2, 2, 5));
+	Queries.push_back(Query(2, 5, 7));
+	Queries.push_back(Query(1, 2, 5));
+	Queries.push_back(Query(0, 2, 7));
+	Queries.push_back(Query(0, 8, 8));
+	Queries.push_back(Query(1, 3, 0));
+	Queries.push_back(Query(0, 5, 8));
+	Queries.push_back(Query(2, 9, 1));
+	Queries.push_back(Query(1, 1, 2));
+	Queries.push_back(Query(2, 4, 9));
+	Queries.push_back(Query(0, 3, 6));
+	Queries.push_back(Query(1, 7, 2));
+	Queries.push_back(Query(1, 0, 2));
+	Queries.push_back(Query(1, 2, 9));
+	Queries.push_back(Query(1, 5, 3));
+	Queries.push_back(Query(2, 3, 0));
+	Queries.push_back(Query(1, 4, 4));
+	Queries.push_back(Query(0, 6, 2));
+	Queries.push_back(Query(0, 0, 5));
+	Queries.push_back(Query(1, 6, 2));
+	Queries.push_back(Query(2, 8, 1));
+	Queries.push_back(Query(2, 9, 1));
+	Queries.push_back(Query(2, 0, 6));
+	for (int i = 0; i < Size; ++i)
+		cout << Queries[i].Type << ' ' << Queries[i].P.X << ' ' << Queries[i].P.Y << endl;
 	cout << "Generation complete!\n";
+	*/
 
 	clock_t Time = clock();
 	for (int i = 0; i < Size; ++i)
@@ -116,7 +146,7 @@ int main()
 					{
 						if (Response.Y != Queries[i].Response)
 						{
-							cout << "Attention: " << Response.Y << ' ' << Queries[i].Response << endl;
+							cout << i << " Attention: " << Response.Y << ' ' << Queries[i].Response << endl;
 							Check = false;
 						}
 					}
@@ -124,7 +154,7 @@ int main()
 					{
 						if (Queries[i].Response != -1)
 						{
-							cout << "Attention: " << Queries[i].Response << endl;
+							cout << i << " Attention: " << Queries[i].Response << endl;
 							Check = false;
 						}
 					}
